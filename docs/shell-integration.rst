@@ -106,8 +106,8 @@ ssh-env
     Wrap :program:`ssh` so that remote hosts that do not have the kitty terminfo
     database installed work correctly. When :envvar:`TERM` is
     :code:`xterm-kitty` it is changed to :code:`xterm-256color` for the SSH
-    connection and :envvar:`COLORTERM`, :envvar:`TERM_PROGRAM` and
-    :envvar:`TERM_PROGRAM_VERSION` are requested to be forwarded to the remote
+    connection and :envvar:`COLORTERM`, :code:`TERM_PROGRAM` and
+    :code:`TERM_PROGRAM_VERSION` are requested to be forwarded to the remote
     host. Whether the remote host accepts these environment variables depends on
     its :code:`AcceptEnv` configuration in :file:`sshd_config`. This feature is
     disabled by default. Add :code:`ssh-env` to the :opt:`shell_integration`
