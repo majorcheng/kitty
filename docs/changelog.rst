@@ -239,6 +239,11 @@ Detailed list of changes
 0.50.0 [future]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+- Shell integration: Add the :code:`ssh-env` feature to wrap :program:`ssh`
+  so that remote hosts without the kitty terminfo database get
+  :code:`TERM=xterm-256color` and terminal environment variables are
+  forwarded. Enable it with :code:`shell_integration ssh-env`
+
 - Custom shaders: New :code:`cursor-trail-railgun`, :code:`cursor-trail-torpedo`
   and :code:`cursor-trail-pixiedust` shaders that make particles fly off the
   cursor as it moves, in the style of neovide (:iss:`10587`)

@@ -48,9 +48,9 @@ Configuration
 ---------------
 
 Shell integration is controlled by the :opt:`shell_integration` option. By
-default, all integration features are enabled. Individual features can be turned
-off or it can be disabled entirely as well. The :opt:`shell_integration` option
-takes a space separated list of keywords:
+default, all integration features except :code:`ssh-env` are enabled.
+Individual features can be turned off or it can be disabled entirely as well.
+The :opt:`shell_integration` option takes a space separated list of keywords:
 
 disabled
     Turn off all shell integration. The shell's launch environment is not
@@ -101,6 +101,20 @@ no-sudo
     all commands for the current user, setting of environment variables at the
     command line is also allowed. Only if commands are restricted is this
     needed.
+
+ssh-env
+    Wrap :program:`ssh` so that remote hosts that do not have the kitty terminfo
+    database installed work correctly. When :envvar:`TERM` is
+    :code:`xterm-kitty` it is changed to :code:`xterm-256color` for the SSH
+    connection and :envvar:`COLORTERM`, :envvar:`TERM_PROGRAM` and
+    :envvar:`TERM_PROGRAM_VERSION` are requested to be forwarded to the remote
+    host. Whether the remote host accepts these environment variables depends on
+    its :code:`AcceptEnv` configuration in :file:`sshd_config`. This feature is
+    disabled by default. Add :code:`ssh-env` to the :opt:`shell_integration`
+    option to enable it. If the kitty terminfo database is available on the
+    remote host, do not enable this feature as it will make the remote session
+    fall back to a less capable terminal type. Use the :doc:`ssh kitten <kittens/ssh>`
+    instead when you want full kitty support on the remote host.
 
 
 More ways to browse command output
@@ -234,6 +248,12 @@ And, by magic, you will be logged into the remote system with fully functional
 shell integration. Alternately, you can :ref:`setup shell integration manually
 <manual_shell_integration>`, by copying the kitty shell integration scripts to
 the remote server and editing the shell rc files there, as described below.
+
+If you only need remote hosts without the kitty terminfo database to work, and
+do not need shell integration on the remote host itself, you can enable the
+:code:`ssh-env` shell integration feature instead, as described in the
+:ref:`configuration section <shell_integration>` above. For example, set
+:opt:`shell_integration` to :code:`enabled ssh-env`.
 
 
 Shell integration in a container

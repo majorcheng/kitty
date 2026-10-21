@@ -267,6 +267,86 @@ class ShellIntegration(BaseTest):
                     self.assertEqual(cp.returncode, 0, f'{shell} failed with stderr: {cp.stderr.decode()}')
                     self.assertEqual(expected, cp.stdout.decode().splitlines())
 
+    @staticmethod
+    def ssh_env_shells():
+        # shell, integration file, wrapper guard, enabled setup, disabled setup, user function, shell flags
+        return (
+            (
+                'bash',
+                ('bash', 'kitty.bash'),
+                'if [[ "${_ksi_prompt[ssh]}" == "y" ]] && ! builtin declare -F ssh >/dev/null 2>&1 && builtin command -v ssh >/dev/null 2>&1; then',
+                'fi',
+                'declare -A _ksi_prompt=([ssh]=y)',
+                'declare -A _ksi_prompt=([ssh]=n)',
+                'ssh() { echo user; }',
+                ['--noprofile', '--norc'],
+            ),
+            (
+                'zsh',
+                ('zsh', 'kitty-integration'),
+                'if (( opt[(Ie)ssh-env] )) && (( $+commands[ssh] )) && (( ! $+functions[ssh] )); then',
+                'fi',
+                'opt=(ssh-env)',
+                'opt=(enabled)',
+                'ssh() { echo user; }',
+                ['-f'],
+            ),
+            (
+                'fish',
+                ('fish', 'vendor_conf.d', 'kitty-shell-integration.fish'),
+                'if contains "ssh-env" $_ksi',
+                'end',
+                'set _ksi enabled ssh-env',
+                'set _ksi enabled',
+                'function ssh; echo user; end',
+                ['--no-config'],
+            ),
+        )
+
+    def test_ssh_env_wrapper(self):
+        if self.with_kitten:
+            return
+        from kitty.options.utils import allowed_shell_integration_values, shell_integration as parse_shell_integration
+
+        self.assertIn('ssh-env', allowed_shell_integration_values)
+        self.ae(parse_shell_integration('ssh-env'), frozenset({'ssh-env'}))
+        ssh_args = ['-o', 'SendEnv=COLORTERM', '-o', 'SendEnv=TERM_PROGRAM', '-o', 'SendEnv=TERM_PROGRAM_VERSION']
+        with tempfile.TemporaryDirectory() as tdir:
+            bin_dir = os.path.join(tdir, 'bin')
+            os.mkdir(bin_dir)
+            with open(os.path.join(bin_dir, 'ssh'), 'w') as f:
+                f.write('#!/bin/sh\nprintf "TERM=%s\\n" "$TERM"\nprintf "%s\\n" "$@"\n')
+            os.chmod(os.path.join(bin_dir, 'ssh'), 0o755)
+            env = {
+                'HOME': tdir,
+                'PATH': bin_dir + os.pathsep + os.environ.get('PATH', ''),
+                'TERM': 'xterm-kitty',
+                'COLORTERM': 'truecolor',
+                'TERM_PROGRAM': 'kitty',
+                'TERM_PROGRAM_VERSION': '1.0',
+            }
+            for shell, path, opening, closing, enabled_setup, disabled_setup, user_func, flags in self.ssh_env_shells():
+                exe = shutil.which(shell)
+                if not exe:
+                    continue
+                with self.subTest(shell=shell), open(os.path.join(shell_integration_dir, *path)) as f:
+                    block = extract_block(f.read(), opening, closing)
+                    self.assertIsNotNone(block)
+
+                def run(setup, term='xterm-kitty', extra=''):
+                    script = '\n'.join((setup, extra, block, 'ssh example.com'))
+                    cp = subprocess.run([exe, *flags, '-c', script], capture_output=True, env={**env, 'TERM': term})
+                    self.assertEqual(cp.returncode, 0, f'{shell} failed with stderr: {cp.stderr.decode()}')
+                    return cp.stdout.decode().splitlines()
+
+                # The wrapper is opt-in and falls back to a widely available TERM
+                self.ae(run(enabled_setup), ['TERM=xterm-256color', *ssh_args, 'example.com'])
+                self.ae(run(disabled_setup), ['TERM=xterm-kitty', 'example.com'])
+                # A non-kitty TERM is left alone
+                self.ae(run(enabled_setup, term='screen-256color'), ['TERM=screen-256color', *ssh_args, 'example.com'])
+                # A user defined ssh function is not clobbered
+                self.ae(run(enabled_setup, extra=user_func), ['user'])
+
     def sudo_parser_tests(self, shell: list[str], func: str) -> None:
         test_cases = [
             (['ls'], 'with_terminfo', 'simple command'),

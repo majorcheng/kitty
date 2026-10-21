@@ -112,7 +112,7 @@ fi
 # which is not available on older bash
 builtin declare -A _ksi_prompt
 _ksi_prompt=(
-    [cursor]='y' [title]='y' [mark]='y' [complete]='y' [cwd]='y' [sudo]='y' [ps0]='' [ps0_suffix]='' [ps1]='' [ps1_suffix]='' [ps2]=''
+    [cursor]='y' [title]='y' [mark]='y' [complete]='y' [cwd]='y' [sudo]='y' [ssh]='n' [ps0]='' [ps0_suffix]='' [ps1]='' [ps1_suffix]='' [ps2]=''
     [hostname_prefix]='' [sourced]='y' [last_reported_cwd]=''
 )
 
@@ -127,6 +127,7 @@ _ksi_main() {
             "no-complete") _ksi_prompt[complete]='n';;
             "no-cwd") _ksi_prompt[cwd]='n';;
             "no-sudo") _ksi_prompt[sudo]='n';;
+            "ssh-env") _ksi_prompt[ssh]='y';;
         esac
     done
     IFS="$ifs"
@@ -263,6 +264,16 @@ _ksi_main() {
         # taking into account the first D after a C.
         _ksi_prompt[ps1]+="\[\e]133;D;\$?\a\e]133;A\a\]"
         _ksi_prompt[ps2]+="\[\e]133;A;k=s\a\]"
+    fi
+
+    if [[ "${_ksi_prompt[ssh]}" == "y" ]] && ! builtin declare -F ssh >/dev/null 2>&1 && builtin command -v ssh >/dev/null 2>&1; then
+        ssh() {
+            builtin local -a ssh_opts
+            builtin local ssh_term="${TERM-}"
+            case "$ssh_term" in xterm-kitty*) ssh_term=xterm-256color;; esac
+            ssh_opts=(-o SendEnv=COLORTERM -o SendEnv=TERM_PROGRAM -o SendEnv=TERM_PROGRAM_VERSION)
+            TERM="$ssh_term" builtin command ssh "${ssh_opts[@]}" "$@"
+        }
     fi
 
     builtin alias edit-in-kitty="kitten edit-in-kitty"

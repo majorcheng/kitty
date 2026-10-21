@@ -3261,6 +3261,9 @@ pager, etc. on supported shells. Set to :code:`disabled` to turn off shell
 integration, completely. It is also possible to disable individual features, set
 to a space separated list of these values: :code:`no-rc`, :code:`no-cursor`,
 :code:`no-title`, :code:`no-cwd`, :code:`no-prompt-mark`, :code:`no-complete`, :code:`no-sudo`.
+Add :code:`ssh-env` to also wrap :program:`ssh` so that remote hosts without
+the kitty terminfo database work correctly and terminal environment variables
+are forwarded. This feature is off by default.
 See :ref:`Shell integration <shell_integration>` for details.
 """,
 )

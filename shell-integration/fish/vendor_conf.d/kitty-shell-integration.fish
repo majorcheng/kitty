@@ -194,6 +194,21 @@ function __ksi_schedule --on-event fish_prompt -d "Setup kitty integration after
         end
     end
 
+    # Wrap ssh so that remote hosts without the kitty terminfo database work. Only install the wrapper if ssh is an
+    # external command, so as not to clobber a user defined function or alias.
+    if contains "ssh-env" $_ksi
+        and test "file" = (type -t ssh 2> /dev/null || echo "x")
+        function ssh
+            set --local ssh_opts -o SendEnv=COLORTERM -o SendEnv=TERM_PROGRAM -o SendEnv=TERM_PROGRAM_VERSION
+            set --local ssh_term "$TERM"
+            if string match -q -- 'xterm-kitty*' "$ssh_term"
+                set ssh_term xterm-256color
+            end
+            set --local --export TERM "$ssh_term"
+            command ssh $ssh_opts $argv
+        end
+    end
+
     # Handle clone launches
     if test -n "$KITTY_IS_CLONE_LAUNCH"
         set --local orig_conda_env "$CONDA_DEFAULT_ENV"
