@@ -29,7 +29,13 @@ def create_font_map(all_fonts: Iterable[CoreTextFont]) -> FontMap:
         ps = family_name_to_key(x['postscript_name'])
         ans['family_map'].setdefault(f, []).append(x)
         ans['ps_map'].setdefault(ps, []).append(x)
-        ans['full_map'].setdefault(f'{f} {s}', []).append(x)
+        full = f'{f} {s}'
+        ans['full_map'].setdefault(full, []).append(x)
+        display_name = x.get('display_name')
+        if display_name:
+            display_name = family_name_to_key(display_name)
+            if display_name != full:
+                ans['full_map'].setdefault(display_name, []).append(x)
         if x['variation'] is not None:
             vmap[f].append(x)
     # CoreText makes a separate descriptor for each named style in each

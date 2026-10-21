@@ -121,6 +121,10 @@ that is, they are used to set the variable value for some font characteristic.
     This can be used to pass an arbitrary string, usually a family or full name
     to the OS font selection APIs. Should not be used in conjunction with any
     other keys. Is the same as specifying just the font name without any keys.
+    Full face names are matched exactly, so for example this selects the
+    Regular face for text that has the ANSI bold attribute::
+
+        bold_font Lilex Nerd Font Mono Regular
 
 
 In addition to these keys, any four letter key is treated as the name of a

@@ -9,6 +9,14 @@ To update |kitty|, :doc:`follow the instructions <binary>`.
 Recent major new features
 ---------------------------
 
+Explicit full font face matching [unreleased]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+On macOS, font face names such as ``bold_font Lilex Nerd Font Mono Regular``
+now match the requested Regular face even when the operating system reports a
+localized style name. This makes explicit ``bold_font`` selections work for
+ANSI-bold terminal text such as colored ``ls`` directory listings.
+
 Choose an edge when resizing [unreleased]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

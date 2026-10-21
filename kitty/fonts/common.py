@@ -366,7 +366,7 @@ def get_font_from_spec(
                     return v
         else:
             family = 'monospace'
-    return find_best_match(family, bold, italic, ignore_face=resolved_medium_font)
+    return find_best_match(family, bold, italic, ignore_face=resolved_medium_font if spec.system == 'auto' else None)
 
 
 class FontFiles(TypedDict):

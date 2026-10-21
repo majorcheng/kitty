@@ -46,6 +46,71 @@ def testing_font_data(name):
 
 
 class Selection(BaseTest):
+    @unittest.skipUnless(is_macos, 'CoreText full-name matching')
+    def test_coretext_full_name_matches_localized_style(self):
+        from unittest.mock import patch
+
+        def face(style, display_name, postscript_name, weight, bold=False):
+            return {
+                'descriptor_type': 'core_text',
+                'path': f'/{postscript_name}.ttf',
+                'postscript_name': postscript_name,
+                'display_name': display_name,
+                'family': 'Lilex Nerd Font Mono',
+                'style': style,
+                'bold': bold,
+                'italic': False,
+                'monospace': True,
+                'expanded': False,
+                'condensed': False,
+                'variation': None,
+                'weight': weight,
+                'slant': 0.0,
+            }
+
+        regular = face('常规体', 'Lilex Nerd Font Mono Regular', 'LilexNFM-Regular', 0.0)
+        bold = face('粗体', 'Lilex Nerd Font Mono Bold', 'LilexNFM-Bold', 0.4, bold=True)
+        from kitty.fonts.core_text import create_font_map, find_best_match
+
+        font_map = create_font_map((regular, bold))
+        with patch('kitty.fonts.core_text.all_fonts_map', return_value=font_map):
+            self.assertIs(find_best_match('Lilex Nerd Font Mono Regular', bold=True), regular)
+            self.assertIs(find_best_match('Lilex Nerd Font Mono 常规体', bold=True), regular)
+
+    @unittest.skipUnless(is_macos, 'CoreText explicit regular bold font')
+    def test_coretext_explicit_regular_bold_font(self):
+        from unittest.mock import patch
+
+        def face(style, display_name, postscript_name, weight, bold=False):
+            return {
+                'descriptor_type': 'core_text',
+                'path': f'/{postscript_name}.ttf',
+                'postscript_name': postscript_name,
+                'display_name': display_name,
+                'family': 'Lilex Nerd Font Mono',
+                'style': style,
+                'bold': bold,
+                'italic': False,
+                'monospace': True,
+                'expanded': False,
+                'condensed': False,
+                'variation': None,
+                'weight': weight,
+                'slant': 0.0,
+            }
+
+        regular = face('常规体', 'Lilex Nerd Font Mono Regular', 'LilexNFM-Regular', 0.0)
+        bold = face('粗体', 'Lilex Nerd Font Mono Bold', 'LilexNFM-Bold', 0.4, bold=True)
+        from kitty.fonts.common import get_font_files
+        from kitty.fonts.core_text import create_font_map
+
+        font_map = create_font_map((regular, bold))
+        with patch('kitty.fonts.common.all_fonts_map', return_value=font_map), patch('kitty.fonts.core_text.all_fonts_map', return_value=font_map):
+            opts = Options()
+            opts.font_family = parse_font_spec('family="Lilex Nerd Font Mono"')
+            opts.bold_font = parse_font_spec('Lilex Nerd Font Mono Regular')
+            self.assertIs(get_font_files(opts)['bold'], regular)
+
     def test_font_selection(self):
         self.set_options({'font_features': {'LiberationMono': (ParsedFontFeature('-dlig'),)}})
         opts = Options()
