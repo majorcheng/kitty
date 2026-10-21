@@ -1214,7 +1214,9 @@ def menu_map(val: str, current_val: Container[str]) -> Iterable[tuple[tuple[str,
     yield location, parts[1][idx + 1 :].lstrip()
 
 
-allowed_shell_integration_values = frozenset({'enabled', 'disabled', 'no-rc', 'no-cursor', 'no-title', 'no-prompt-mark', 'no-complete', 'no-cwd', 'no-sudo', 'ssh-env'})
+allowed_shell_integration_values = frozenset(
+    {'enabled', 'disabled', 'no-rc', 'no-cursor', 'no-title', 'no-prompt-mark', 'no-complete', 'no-cwd', 'no-sudo', 'ssh-env'}
+)
 
 
 def shell_integration(x: str) -> frozenset[str]:

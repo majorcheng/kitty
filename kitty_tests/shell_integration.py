@@ -306,7 +306,8 @@ class ShellIntegration(BaseTest):
     def test_ssh_env_wrapper(self):
         if self.with_kitten:
             return
-        from kitty.options.utils import allowed_shell_integration_values, shell_integration as parse_shell_integration
+        from kitty.options.utils import allowed_shell_integration_values
+        from kitty.options.utils import shell_integration as parse_shell_integration
 
         self.assertIn('ssh-env', allowed_shell_integration_values)
         self.ae(parse_shell_integration('ssh-env'), frozenset({'ssh-env'}))
