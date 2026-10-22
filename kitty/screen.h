@@ -171,7 +171,7 @@ typedef struct {
     ANSIBuf as_ansi_buf;
     char_type last_graphic_char;
     uint8_t main_key_encoding_flags[8], alt_key_encoding_flags[8], *key_encoding_flags;
-    uint8_t modify_other_keys_mode;  // xterm modifyOtherKeys level requested by the child (0 = off)
+    uint8_t modify_other_keys_mode; // xterm modifyOtherKeys level requested by the child (0 = off)
     struct {
         monotonic_t start, duration;
     } ignore_bells;

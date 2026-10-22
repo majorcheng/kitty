@@ -2122,7 +2122,7 @@ screen_current_key_encoding_flags(Screen *self) {
             break;
         }
     }
-    if (self->modify_other_keys_mode) ans |= 1;  // disambiguate escape codes
+    if (self->modify_other_keys_mode) ans |= 1; // disambiguate escape codes
     return ans;
 }
 
