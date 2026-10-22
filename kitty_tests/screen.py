@@ -1787,6 +1787,32 @@ class TestScreen(BaseTest):
         ac(15)
         w('<'), ac(14), w('<'), ac(13)
 
+    def test_modify_other_keys(self):
+        # xterm's modifyOtherKeys is folded into the kitty keyboard protocol's disambiguate
+        # flag, so that multiplexers like tmux, which only speak modifyOtherKeys, can still
+        # obtain modified keys such as Shift+Enter.
+        s = self.create_screen()
+
+        def ck(expected):
+            self.ae(s.current_key_encoding_flags(), expected)
+
+        ck(0)
+        parse_bytes(s, b'\033[>4;2m')
+        ck(1)
+        parse_bytes(s, b'\033[>4;1m')
+        ck(1)
+        # stacks with flags requested through the kitty protocol itself
+        parse_bytes(s, b'\033[=4u')
+        ck(0b101)
+        # turning modifyOtherKeys off clears only its own bit
+        parse_bytes(s, b'\033[>4;0m')
+        ck(0b100)
+        # the missing parameter form also means off
+        parse_bytes(s, b'\033[>4m')
+        ck(0b100)
+        s.reset()
+        ck(0)
+
     def test_color_stack(self):
         s = self.create_screen()
         c = s.callbacks

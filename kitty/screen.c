@@ -226,6 +226,7 @@ do_screen_reset(Screen *self, bool is_hard_reset) {
     self->cursor_render_info.render_even_when_unfocused = false;
     memset(self->main_key_encoding_flags, 0, sizeof(self->main_key_encoding_flags));
     memset(self->alt_key_encoding_flags, 0, sizeof(self->alt_key_encoding_flags));
+    self->modify_other_keys_mode = 0;
     self->display_window_char = 0;
     self->progress_state = PROGRESS_STATE_UNSET;
     self->progress_percent = 0;
@@ -2098,22 +2099,31 @@ screen_reset_mode(Screen *self, unsigned int mode) {
 
 void
 screen_modify_other_keys(Screen *self, unsigned val, unsigned val2) {
-    // Only report an error about modifyOtherKeys if the kitty keyboard
-    // protocol is not in effect and the application is trying to turn it on.
-    // There are some applications that try to enable both.
-    if (self->test_child == Py_None && !screen_current_key_encoding_flags(self) && val == 4 && val2 != INT_MAX && val2 != 0) {
-        log_error(
-            "The application is trying to use xterm's modifyOtherKeys. This is superseded by the kitty keyboard protocol "
-            "https://sw.kovidgoyal.net/kitty/keyboard-protocol. The application should be updated to use that.");
-    }
+    // xterm's modifyOtherKeys: CSI > 4 ; Ps m, where Ps 0 turns it off and 1/2 turn it on.
+    // Kitty has no equivalent switch, but both xterm modes are a subset of the kitty
+    // keyboard protocol's "disambiguate escape codes" flag, so we fold the request into that
+    // flag instead of emitting xterm's CSI 27 ~ encoding. This is what lets multiplexers such
+    // as tmux, which only speak modifyOtherKeys, obtain modified keys like Shift+Enter.
+    // Known deviation: the legacy three parameter per-key form CSI > 4 ; Ps ; Pv m is treated
+    // as the global mode.
+    if (val != 4) return;
+    uint8_t mode = 0;
+    if (val2 != INT_MAX) mode = val2 > 2 ? 2 : (uint8_t)val2;
+    self->modify_other_keys_mode = mode;
+    debug_input("\x1b[35mmodifyOtherKeys mode set to: %u\x1b[39m\n", mode);
 }
 
 uint8_t
 screen_current_key_encoding_flags(Screen *self) {
+    uint8_t ans = 0;
     for (unsigned i = arraysz(self->main_key_encoding_flags); i-- > 0;) {
-        if (self->key_encoding_flags[i] & 0x80) return self->key_encoding_flags[i] & 0x7f;
+        if (self->key_encoding_flags[i] & 0x80) {
+            ans = self->key_encoding_flags[i] & 0x7f;
+            break;
+        }
     }
-    return 0;
+    if (self->modify_other_keys_mode) ans |= 1;  // disambiguate escape codes
+    return ans;
 }
 
 void
